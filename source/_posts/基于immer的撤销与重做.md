@@ -107,7 +107,22 @@ expect(lastState).toEqual({
   age: 32 
 })
 ``` 
-至此`immer`已经帮我们完成了最难的一部分, 而`@reduxjs/toolkit`中就使用了`immer`作为依赖库, 现在要做的就是把每次`produce`(`createSlice`中实现`reducer`的核心)生成的`patches`与`inversePatches`成对的保存在一条记录里作为历史.
+至此`immer`已经帮我们完成了最难的一部分, 而`@reduxjs/toolkit`中就使用了`immer`作为依赖库, 现在要做的就是把每次`produce` (`createSlice`中实现`reducer`的核心)生成的`patches`与`inversePatches`成对的保存在一条记录里作为历史.
+
+
+在默认的`@redux/toolkit`中, 并没有实现上述功能, 于是需要**修改源码**, 让`immer`在`reducer`执行时记录差分补丁. `immer`作用的区域是`createReducer`这个文件, 首先需要在其引入模块部分开启补丁模式
+```diff
+- import type { Draft } from 'immer'
+- import createNextState, { isDraft, isDraftable, enableES5 } from 'immer'
++ import type { Draft, Patch } from 'immer'
++ import createNextState, { isDraft, isDraftable, enableES5, enablePatches } from 'immer'
+import type { AnyAction, Action, Reducer } from 'redux'
+```
+在创建`slice`的过程中, 单个`reducer`也可以通过对象的形式进行注册声明, 于是此处拟定额外传递一个`patch`回调作为第三个可选配置, 接受参数为`patches`, `inversePatches` 和 `action`, 改造后的目标(以RTK官网的createSlice)如下
+```diff
+
+
+```
 
 - __历史记录栈__
 
