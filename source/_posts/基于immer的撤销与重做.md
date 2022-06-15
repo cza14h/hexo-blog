@@ -112,6 +112,7 @@ expect(lastState).toEqual({
 
 在默认的`@redux/toolkit`中, 并没有实现上述功能, 于是需要**修改源码**, 让`immer`在`reducer`执行时记录差分补丁. `immer`作用的区域是`createReducer`这个文件, 首先需要在其引入模块部分开启补丁模式
 ```diff
+/* createSlice.ts */
 - import type { Draft } from 'immer'
 - import createNextState, { isDraft, isDraftable, enableES5 } from 'immer'
 + import type { Draft, Patch } from 'immer'
@@ -120,7 +121,26 @@ import type { AnyAction, Action, Reducer } from 'redux'
 ```
 在创建`slice`的过程中, 单个`reducer`也可以通过对象的形式进行注册声明, 于是此处拟定额外传递一个`patch`回调作为第三个可选配置, 接受参数为`patches`, `inversePatches` 和 `action`, 改造后的目标(以RTK官网的createSlice)如下
 ```diff
+import { createSlice, nanoid } from '@reduxjs/toolkit'
 
+const todosSlice = createSlice({
+  name: 'todos',
+  initialState: [],
+  reducers: {
+    addTodo: {
+      reducer: (state, action) => {
+        state.push(action.payload)
+      },
+      prepare: (text) => {
+        const id = nanoid()
+        return { payload: { id, text } }
+      },
++     patch:(patches, inversePatches, action) => {
++       //...
++     }
+    },
+  },
+})
 
 ```
 
